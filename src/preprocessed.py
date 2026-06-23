@@ -48,7 +48,7 @@ def standardize_columns(df:pd.DataFrame) -> pd.DataFrame:
     # renaming the columns names
     df.rename(columns = standardize, inplace = True)
     # dropping the customer_id
-    df.drop(columns="cutomer_id", axis="columns", inplace=True)
+    df.drop(columns="customer_id", axis="columns", inplace=True)
     # Removing the leading and trailing whitespaces from string columns
     string_cols = df.select_dtypes(include=["object", "string"]).columns
     for col in string_cols:
@@ -77,7 +77,7 @@ def get_categorical_columns(df:pd.DataFrame, max_unique_values:int = 10) -> list
             pd.api.types.is_object_dtype(df[col])
             or pd.api.types.is_string_dtype(df[col])
             or pd.api.types.is_categorical_dtype(df[col])
-            or df[col].nunique <= max_unique_values
+            or df[col].nunique() <= max_unique_values
         ):
             df[col] = df[col].astype("category")
             categorical_cols.append(col)
@@ -88,3 +88,57 @@ def get_categorical_columns(df:pd.DataFrame, max_unique_values:int = 10) -> list
 def get_numeric_columns(df:pd.DataFrame) -> list[str]:
     numeric_cols = (df.select_dtypes(include=["int64", "float64"]).columns.tolist())
     return numeric_cols 
+
+# Function for encoding binary categorical columns into numericl vlues
+def encode_binary_columns(df:pd.DataFrame) -> pd.DataFrame:
+    # Columns containing binary categorical values
+    binary_cols = [
+        "gender",
+        "partner",
+        "dependents",
+        "phone_service",
+        "paperless_billing",
+        "churn"
+    ]
+    # Mapping dictionary for binary categories
+    mapping = {
+        "Yes": 1,
+        "No": 0,
+        "Male": 1,
+        "Female": 0
+    }
+    # Converting columns to string type to ensure consistency
+    df[binary_cols] = df[binary_cols].astype(str)
+    # Replacing the categorical values with their numerical equivalents
+    df[binary_cols] = df[binary_cols].replace(mapping)
+    # Converting encoded columns to integer type
+    df[binary_cols] = df[binary_cols].astype(int)
+    
+    return df
+
+# Function for saving the preprocessed to data to csv file 
+def save_data(df:pd.DataFrame, file_path:str) -> None:
+    # Ensuring that the parent directory exists
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    # Saving the Dataframe to csv withouth the index column
+    df.to_csv(file_path, index = False)
+    print(f"Data successfully saved to : {file_path}")
+
+if __name__ == "__main__":    
+    # Calling all the preprocessed for raw data preprocessing
+    # Data Loading
+    data = load_data("../data/raw/Telco-Customer-Churn.csv")
+    # Column Standardization
+    data = standardize_columns(data)
+    # Cleaning the total charge column
+    data = clean_total_charges(data)
+    # Showcasing Categorical Columns
+    cat_cols = get_categorical_columns(data)
+    print(cat_cols)
+    # Showcasing Numerical Columns
+    num_cols = get_numeric_columns(data)
+    print(num_cols)
+    # Encoding Binary columns
+    data = encode_binary_columns(data)
+    # Saving data to csv
+    save_data(data, "../data/processed/Telco-Customer-Churn-Cleaned.csv")
