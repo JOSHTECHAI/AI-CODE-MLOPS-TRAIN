@@ -10,7 +10,7 @@ import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 
 # Creating the CustomColumnTransformer class
-class CustomColumnTransformer:
+class CustomColumnTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, columns:list[str], transformer):
         self.columns = columns
         self.transformer = transformer
