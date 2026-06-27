@@ -1,7 +1,7 @@
 """
 1. Creating a function to load our data
-2. Creating a function for data standardization
-3. Creating a function to clean total charge column
+2. Creating a function to clean total charge column
+3. Creating a function for data standardization
 4. Creating a function to identify categorical column
 5. Creating a function to identify numerical column
 6. Creating a function to perform binary encoding on binary columns (columns with cardinality of 2)
@@ -17,6 +17,19 @@ def load_data(file_path:str) -> pd.DataFrame:
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
     return pd.read_csv(file_path)
+
+# Function for cleaning and imputing the total_charges column
+def clean_total_charges(df:pd.DataFrame) -> pd.DataFrame:
+    # creating a copy of df
+    df = df.copy()
+    # identifying blank values in the total_charges column
+    blank_values = df["TotalCharges"].astype(str).str.strip().eq("")
+    # converting invalid values to NaN
+    df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors = "coerce")
+    # replace missing values with 0 for customers whose tenure is zero
+    df.loc[(df['TotalCharges'].isna()) & (df['tenure']==0), 'TotalCharges'] = 0
+    
+    return df
 
 # Function for standardizing column names, removing leading and trailing whitespaces and dropping the customer_id
 def standardize_columns(df:pd.DataFrame) -> pd.DataFrame:
@@ -54,19 +67,6 @@ def standardize_columns(df:pd.DataFrame) -> pd.DataFrame:
     for col in string_cols:
         df[col] = df[col].str.strip()
         
-    return df
-
-# Function for cleaning and imputing the total_charges column
-def clean_total_charges(df:pd.DataFrame) -> pd.DataFrame:
-    # creating a copy of df
-    df = df.copy()
-    # identifying blank values in the total_charges column
-    blank_values = df["total_charges"].astype(str).str.strip().eq("")
-    # converting invalid values to NaN
-    df['total_charges'] = pd.to_numeric(df['total_charges'], errors = "coerce")
-    # replace missing values with 0 for customers whose tenure is zero
-    df.loc[(df['total_charges'].isna()) & (df['tenure']==0), 'total_charges'] = 0
-    
     return df
 
 # Function for getting categorical columns in the data
@@ -127,11 +127,11 @@ def save_data(df:pd.DataFrame, file_path:str) -> None:
 if __name__ == "__main__":    
     # Calling all the preprocessed for raw data preprocessing
     # Data Loading
-    data = load_data("../data/raw/Telco-Customer-Churn.csv")
-    # Column Standardization
-    data = standardize_columns(data)
+    data = load_data("data/raw/Telco-Customer-Churn.csv")
     # Cleaning the total charge column
     data = clean_total_charges(data)
+    # Column Standardization
+    data = standardize_columns(data)
     # Showcasing Categorical Columns
     cat_cols = get_categorical_columns(data)
     print(cat_cols)
@@ -141,4 +141,4 @@ if __name__ == "__main__":
     # Encoding Binary columns
     data = encode_binary_columns(data)
     # Saving data to csv
-    save_data(data, "../data/processed/Telco-Customer-Churn-Cleaned.csv")
+    save_data(data, "data/processed/Telco-Customer-Churn-Cleaned.csv")
