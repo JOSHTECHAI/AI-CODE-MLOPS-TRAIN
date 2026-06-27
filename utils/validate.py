@@ -10,8 +10,7 @@ import pandera.pandas as pa
 from pandera.pandas import DataFrameSchema, Column, Check
 from pandera.errors import SchemaErrors
 from typing import Tuple, List
-# from src.preprocessed import clean_total_charges
-# from src.preprocessed import load_data
+from src.preprocessed import clean_total_charges, load_data
 
 # Function for Data Validation
 def validate_data(df:pd.DataFrame) -> Tuple[bool, List[str]]:
@@ -20,9 +19,7 @@ def validate_data(df:pd.DataFrame) -> Tuple[bool, List[str]]:
     
     # Schema definition
     # Cleaning the total charges column
-    # df = clean_total_charges(df)
-    df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
-    df.loc[(df["TotalCharges"].isna()) & (df["tenure"] == 0), "TotalCharges"] = 0
+    df = clean_total_charges(df)
     schema = DataFrameSchema(
         {
             # Customer identifier
@@ -74,9 +71,9 @@ def validate_data(df:pd.DataFrame) -> Tuple[bool, List[str]]:
         print("\nFailed checks")
         for check in failed_checks:
             print(f"   o {check}")
-    
+            
     return success, failed_checks
 
 if __name__ == "__main__":
-    data = pd.read_csv("../data/raw/Telco-Customer-Churn.csv")
+    data = load_data("data/raw/Telco-Customer-Churn.csv")
     success, failed_checks = validate_data(data)
