@@ -16,7 +16,7 @@ class CustomColumnTransformer(BaseEstimator, TransformerMixin):
         self.transformer = transformer
     
     # Creating the fit method
-    def fit(self, X:pd.DataFrame, y = None):
+    def fit(self, X:pd.DataFrame):
         self.transformer.fit(X[self.columns])
         # obtaining output features name
         if hasatrr(self.transformer, "get_feature_names_out"):
